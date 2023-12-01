@@ -3,13 +3,15 @@ import geopandas as gpd
 import numpy as np
 from shapely.ops import polygonize
 import utils
+from utils import verbose_print,get_attribute_from_largest_intersection
+from clusterizer import compress_services,get_cluster_hulls
     
     
 class CityModel:
-    
+        
     def __init__(self, territory, roads=None, railways=None, water=None, verbose=True):
         
-        self.verbose = verbose    
+        self.verbose = verbose
         
         self.water = None
         if water is not None:
@@ -25,10 +27,24 @@ class CityModel:
         self.railways = railways.geometry if type(railways) == gpd.GeoDataFrame else railways
 
         self.blocks = None
+        self.services = None
+        self.cluster_polygons = None
+        self.cluster_info = None
                 
             
     def generate_blocks(self, min_block_width=None):
+        """
+        # TODO
         
+        Attributes
+        ----------
+        # TODO
+        
+        Returns
+        -------
+        # TODO
+        """
+               
         utils.verbose_print("GENERATING BLOCKS", self.verbose)
         
         # create a GeoDataFrame with barriers
@@ -67,11 +83,97 @@ class CityModel:
 
         self.blocks = blocks
         utils.verbose_print("Blocks generated.\n", self.verbose)
+   
+        
+    def cluster_blocks(self, clustering_distance=1200, method="average", max_number_of_services=10000):
+        """
+        # TODO
+        
+        Attributes
+        ----------
+        # TODO
+        
+        Returns
+        -------
+        # TODO
+        """
+             
+        verbose_print("CLUSTERING BLOCKS", self.verbose)
+        
+        _services = self.services
+
+        # if there are more than X services, perform service clustering 
+        if len(_services) > max_number_of_services:
+            verbose_print("Too many services. Compressing...", self.verbose)
+            _services = compress_services(self.services, method="kmeans", n_clusters=max_number_of_services)
+            verbose_print("Services compressed. Proceeding with clustering...", self.verbose)
+
+        # cluster services, create convex hulls from cluster points and assign clusters to blocks
+        self.cluster_polygons = get_cluster_hulls(
+            _services.to_crs(self.local_crs),
+            distance_limit=clustering_distance,
+            link=method)
+        
+        self.blocks = get_attribute_from_largest_intersection(
+            self.blocks, self.cluster_polygons, 
+            attribute_column="cluster",
+            df_id_column="block_id",
+            projected_crs=self.local_crs)
+        
+        # if cluster polygon occupies less than X% of block's area, unassign cluster from this block
+        self.blocks.loc[self.blocks["intersection_area"] < 0.4, "cluster"] = np.nan
+        
+        self.link_services_to_blocks()
+        verbose_print("Blocks clustered.\n", self.verbose)
+                
+        
+    def link_services_to_blocks(self):
+        """
+        # TODO
+        
+        Attributes
+        ----------
+        # TODO
+        
+        Returns
+        -------
+        # TODO
+        """
+           
+        blocks_columns = ["block_id", "geometry"]
+        if "cluster" in self.blocks.columns:
+            blocks_columns.append("cluster")
+
+        # drop block_id and cluster columns in services
+        self.services = self.services.drop(['block_id','cluster'], axis=1, errors='ignore')
+
+        # add block_id and cluster from the nearest block to the services
+        self.services = self.services.to_crs(self.local_crs)
+        self.services = self.services.sjoin_nearest(self.blocks.to_crs(self.local_crs)[blocks_columns], 
+                                                    how="left", max_distance=200).to_crs(4326)
+        
+        # drop services that are not assigned to any block
+        self.services = self.services.dropna(subset="block_id")
+        
+        # clean up indices in services GeoDataFrame
+        self.services = self.services.drop("index_right", axis=1)
+        self.services["block_id"] = self.services["block_id"].astype(int)
+        self.services = self.services.reset_index(drop=True)
         
         
     @staticmethod
     def _get_enclosures(barriers,limit):
-        # limit should be a geodataframe or geoseries with with Polygon or MultiPolygon geometry
+        """
+        # TODO
+        
+        Attributes
+        ----------
+        # TODO
+        
+        Returns
+        -------
+        # TODO
+        """
         
         barriers = pd.concat([barriers,limit.boundary]).reset_index(drop=True)
 
@@ -87,6 +189,17 @@ class CityModel:
             
     @staticmethod
     def _reindex_blocks(blocks):
+        """
+        # TODO
+        
+        Attributes
+        ----------
+        # TODO
+        
+        Returns
+        -------
+        # TODO
+        """
         
         if 'block_id' in blocks.columns:
             blocks = blocks.drop('block_id',axis=1).reset_index().rename(columns={'index':'block_id'})
@@ -94,6 +207,17 @@ class CityModel:
     
     
     def explore(self,column=None,cmap='Blues',attribute='blocks',tiles='CartoDB Positron'):
+        """
+        # TODO
+        
+        Attributes
+        ----------
+        # TODO
+        
+        Returns
+        -------
+        # TODO
+        """
         
         if attribute=='blocks':
             m = self.blocks.explore(column=column,tiles=tiles)
