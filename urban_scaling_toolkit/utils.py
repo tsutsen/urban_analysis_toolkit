@@ -136,3 +136,37 @@ def filter_bottlenecks(gdf,projected_crs,min_width=40):
         gdf['area'] = gdf.to_crs(projected_crs).area
         
     return gdf
+
+
+def get_attribute_from_largest_intersection(df, df_with_attribute, attribute_column,df_id_column='block_id',projected_crs=3857):
+    """
+    # TODO
+    
+    Attributes
+    ----------
+    # TODO
+    
+    Returns
+    -------
+    # TODO
+    """
+    
+    df_temp = gpd.overlay(
+        df[[df_id_column, "geometry"]],
+        df_with_attribute[[attribute_column, "geometry"]],how="intersection",keep_geom_type=False)
+    
+    df_temp["intersection_area"] = df_temp.to_crs(projected_crs)["geometry"].area
+    df_temp = df_temp.groupby([df_id_column, attribute_column])["intersection_area"].sum().reset_index()
+
+    df["area"] = df.to_crs(projected_crs)["geometry"].area
+    df_temp = df_temp.merge(df[[df_id_column, "area"]], how="left")
+    df_temp["intersection_area"] = df_temp["intersection_area"] / df_temp["area"]
+    df_temp = df_temp.sort_values(by=[df_id_column, "intersection_area"])
+    df_temp = df_temp.drop_duplicates(subset=df_id_column, keep="last")
+
+    if "cluster" in df.columns:
+        df = df.drop("cluster", axis=1)
+
+    df = df.merge(df_temp[[df_id_column, attribute_column, "intersection_area"]], how="left")
+
+    return df
