@@ -1,5 +1,6 @@
 import geopandas as gpd
 from shapely.geometry import MultiPolygon, Polygon
+import numpy as np
 
 import pyproj
 from pyproj.aoi import AreaOfInterest
