@@ -5,6 +5,7 @@ from shapely.ops import polygonize
 import utils
 from utils import verbose_print,get_attribute_from_largest_intersection
 from clusterizer import compress_services,get_cluster_hulls
+import metrics
     
     
 class CityModel:
@@ -123,11 +124,13 @@ class CityModel:
         # if cluster polygon occupies less than X% of block's area, unassign cluster from this block
         self.blocks.loc[self.blocks["intersection_area"] < 0.4, "cluster"] = np.nan
         
-        self.link_services_to_blocks()
+        self._link_services_to_blocks()
         verbose_print("Blocks clustered.\n", self.verbose)
                 
-        
-    def link_services_to_blocks(self):
+    def evaluate_centrality(self):
+        self.blocks = metrics.evaluate_centrality(self.blocks,self.services)
+    
+    def _link_services_to_blocks(self):
         """
         # TODO
         
