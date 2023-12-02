@@ -216,6 +216,14 @@ class CityModel:
             ["cluster", "category"])["geometry"].count().unstack().reset_index()
         
         cluster_info = cluster_info.merge(service_category_counts, how="left")
+        
+        # add column with normalized centrality
+        min_centrality = 0.4
+        #min_centrality = cluster_info['centrality'].replace(0,np.nan).quantile(0.1)
+        cluster_info['centrality_norm'] = cluster_info['centrality']
+        cluster_info.loc[cluster_info['centrality_norm']<min_centrality,'centrality_norm'] = np.nan
+        cluster_info['centrality_norm'] = utils.normalize_min_max(cluster_info['centrality_norm']).fillna(0)
+        
         self.cluster_info = cluster_info
         
         
