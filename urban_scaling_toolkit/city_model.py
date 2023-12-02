@@ -18,7 +18,7 @@ class CityModel:
         
         self.water = None
         if water is not None:
-            territory = territory.overlay(water[water.geom_type != 'LineString'],how='difference') # cut water polygons from territory
+            territory = territory.reset_index().overlay(water[water.geom_type != 'LineString'].reset_index(),how='difference') # cut water polygons from territory
             self.water = water.geometry if type(water) == gpd.GeoDataFrame else water
             self.water = self.water.map(lambda x: x.boundary if x.geom_type in ['Polygon','MultiPolygon'] else x).set_crs(4326)
         
