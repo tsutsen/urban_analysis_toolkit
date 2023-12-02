@@ -166,7 +166,40 @@ class CityModel:
         
         self.blocks = raster_handler.project_grid_values(self.blocks,population_grid,'block_id','population')
         self.blocks['population'] = self.blocks['population'].fillna(0).round().astype(int)
+        
+        
+    def aggregate_cluster_info(self):
+        cluster_info = (
+            self.blocks.groupby("cluster").agg(
+                {
+                    "centrality_bin": "first",
+                    "centrality": "first",
+                    "diversity": "first",
+                    "services_total": "first",
+                    "cluster_area": "first",
+                    "population": "sum",
+                    "geometry": list,
+                }
+            ).reset_index())
+        
+        cluster_info["geometry"] = cluster_info["geometry"].map(
+            lambda x: gpd.GeoDataFrame(geometry=x).unary_union)
+        cluster_info = gpd.GeoDataFrame(cluster_info,crs=4326)
+        
+        service_stats_tags = self.services.groupby("cluster")["tags"].apply("sum")
+        service_stats_tags = service_stats_tags.map(
+            lambda x: [*pd.Series(x).value_counts().nlargest(3).keys()]).reset_index()
+        
+        service_stats_categories = self.services.groupby("cluster")["category"].apply(list)
+        service_stats_categories = service_stats_categories.map(
+            lambda x: [*pd.Series(x).value_counts().nlargest(3).keys()]).reset_index()
 
+        service_category_counts = self.services.groupby(
+            ["cluster", "category"])["geometry"].count().unstack().reset_index()
+        
+        cluster_info = cluster_info.merge(service_category_counts, how="left")
+        self.cluster_info = cluster_info
+        
         
     def _link_services_to_blocks(self):
         """
