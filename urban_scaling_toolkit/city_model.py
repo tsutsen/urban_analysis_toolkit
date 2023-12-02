@@ -173,6 +173,17 @@ class CityModel:
         
         
     def aggregate_cluster_info(self):
+        """
+        # TODO
+        
+        Attributes
+        ----------
+        # TODO
+        
+        Returns
+        -------
+        # TODO
+        """
         
         self.blocks['area'] = self.blocks.to_crs(self.local_crs).area
         
