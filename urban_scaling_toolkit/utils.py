@@ -12,6 +12,10 @@ def verbose_print(text, verbose=True):
     if verbose: print(text)
 
 
+def reproject_shapely(geom,from_crs,to_crs):
+    return gpd.GeoSeries(geom,crs=from_crs).to_crs(to_crs).iloc[0]
+
+
 def get_projected_crs(poly):
     """
     Returns a local projected CRS for a given polygon.
