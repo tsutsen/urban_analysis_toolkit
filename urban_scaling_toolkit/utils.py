@@ -172,6 +172,6 @@ def get_attribute_from_largest_intersection(df, df_with_attribute, attribute_col
     if "cluster" in df.columns:
         df = df.drop("cluster", axis=1)
 
-    df = df.merge(df_temp[[df_id_column, attribute_column, "intersection_area"]], how="left")
+    df = df.merge(df_temp[[df_id_column, attribute_column]], how="left")
 
     return df
