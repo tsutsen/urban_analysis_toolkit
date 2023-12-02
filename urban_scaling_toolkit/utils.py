@@ -12,6 +12,10 @@ def verbose_print(text, verbose=True):
     if verbose: print(text)
 
 
+def normalize_min_max(column):
+    return (column-column.min())/(column.max()-column.min())
+
+
 def reproject_shapely(geom,from_crs,to_crs):
     return gpd.GeoSeries(geom,crs=from_crs).to_crs(to_crs).iloc[0]
 
