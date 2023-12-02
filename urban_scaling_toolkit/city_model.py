@@ -87,7 +87,10 @@ class CityModel:
         self.blocks = blocks
         utils.verbose_print("Blocks generated.\n", self.verbose)
    
-        
+    def set_services(self,services):
+        self.services = services
+        self._link_services_to_blocks()
+    
     def cluster_blocks(self, clustering_distance=1200, method="average", max_number_of_services=10000):
         """
         # TODO
