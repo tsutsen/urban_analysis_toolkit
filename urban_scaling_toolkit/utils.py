@@ -1,6 +1,7 @@
 import geopandas as gpd
 from shapely.geometry import MultiPolygon, Polygon
 import numpy as np
+import dill
 
 import pyproj
 from pyproj.aoi import AreaOfInterest
@@ -179,3 +180,14 @@ def get_attribute_from_largest_intersection(df, df_with_attribute, attribute_col
     df = df.merge(df_temp[[df_id_column, attribute_column, "intersection_area"]], how="left")
 
     return df
+
+
+def save_pkl(var,filename):
+    with open(filename, 'wb') as pickle_file:
+        file = dill.dump(var,pickle_file)
+
+
+def load_pkl(filename):
+    with open(filename, 'rb') as pickle_file:
+        file = dill.load(pickle_file)
+    return file
