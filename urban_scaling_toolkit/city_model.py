@@ -2,11 +2,13 @@ import pandas as pd
 import geopandas as gpd
 import numpy as np
 from shapely.ops import polygonize
+from shapely import Polygon,MultiPolygon
 import utils
 from utils import verbose_print,get_attribute_from_largest_intersection
 from clusterizer import compress_services,get_cluster_hulls
 import metrics
-    
+import raster_handler
+
     
 class CityModel:
         
@@ -20,9 +22,9 @@ class CityModel:
             self.water = water.geometry if type(water) == gpd.GeoDataFrame else water
             self.water = self.water.map(lambda x: x.boundary if x.geom_type in ['Polygon','MultiPolygon'] else x).set_crs(4326)
         
-        self.territory = territory.geometry
+        self.territory = territory.unary_union
         
-        self.local_crs = utils.get_projected_crs(self.territory.iloc[0])
+        self.local_crs = utils.get_projected_crs(self.territory)
 
         self.roads = roads.geometry if type(roads) == gpd.GeoDataFrame else roads
         self.railways = railways.geometry if type(railways) == gpd.GeoDataFrame else railways
@@ -126,10 +128,46 @@ class CityModel:
         
         self._link_services_to_blocks()
         verbose_print("Blocks clustered.\n", self.verbose)
+             
                 
     def evaluate_centrality(self):
+        """
+        # TODO
+        
+        Attributes
+        ----------
+        # TODO
+        
+        Returns
+        -------
+        # TODO
+        """
+        
         self.blocks = metrics.evaluate_centrality(self.blocks,self.services)
     
+    
+    def populate_blocks(self,population_raster_path="GHS_POP_E2020.tif"):
+        """
+        # TODO
+        
+        Attributes
+        ----------
+        # TODO
+        
+        Returns
+        -------
+        # TODO
+        """
+        
+        population_raster = raster_handler.open_raster(population_raster_path)
+        
+        population_grid = raster_handler.vectorize_raster_grid(population_raster,self.territory,value_column_name='population')
+        population_grid = population_grid.query('population>=0')
+        
+        self.blocks = raster_handler.project_grid_values(self.blocks,population_grid,'block_id','population')
+        self.blocks['population'] = self.blocks['population'].fillna(0).round().astype(int)
+
+        
     def _link_services_to_blocks(self):
         """
         # TODO
@@ -177,6 +215,9 @@ class CityModel:
         -------
         # TODO
         """
+        
+        if type(limit) in [Polygon,MultiPolygon]:
+            limit = gpd.GeoSeries(limit,crs=4326)
         
         barriers = pd.concat([barriers,limit.boundary]).reset_index(drop=True)
 
