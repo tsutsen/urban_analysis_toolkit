@@ -106,12 +106,12 @@ class CityModel:
              
         verbose_print("CLUSTERING BLOCKS", self.verbose)
         
-        _services = self.services
+        _services = self.services.copy()
 
         # if there are more than X services, perform service clustering 
         if len(_services) > max_number_of_services:
             verbose_print("Too many services. Compressing...", self.verbose)
-            _services = compress_services(self.services, n_clusters=max_number_of_services)
+            _services = compress_services(_services, n_clusters=max_number_of_services)
             verbose_print("Services compressed. Proceeding with clustering...", self.verbose)
 
         # cluster services, create convex hulls from cluster points and assign clusters to blocks
@@ -128,6 +128,7 @@ class CityModel:
         
         # if cluster polygon occupies less than X% of block's area, unassign cluster from this block
         self.blocks.loc[self.blocks["intersection_area"] < 0.4, "cluster"] = np.nan
+        self.blocks = self.blocks.drop('intersection_area',axis=1)
         
         self._link_services_to_blocks()
         verbose_print("Blocks clustered.\n", self.verbose)
