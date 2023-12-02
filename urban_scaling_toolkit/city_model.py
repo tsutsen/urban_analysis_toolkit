@@ -173,6 +173,9 @@ class CityModel:
         
         
     def aggregate_cluster_info(self):
+        
+        self.blocks['area'] = self.blocks.to_crs(self.local_crs).area
+        
         cluster_info = (
             self.blocks.groupby("cluster").agg(
                 {
@@ -180,7 +183,7 @@ class CityModel:
                     "centrality": "first",
                     "diversity": "first",
                     "services_total": "first",
-                    "cluster_area": "first",
+                    "area": "sum",
                     "population": "sum",
                     "geometry": list,
                 }
