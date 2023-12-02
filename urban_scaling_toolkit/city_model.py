@@ -111,7 +111,7 @@ class CityModel:
         # if there are more than X services, perform service clustering 
         if len(_services) > max_number_of_services:
             verbose_print("Too many services. Compressing...", self.verbose)
-            _services = compress_services(self.services, method="kmeans", n_clusters=max_number_of_services)
+            _services = compress_services(self.services, n_clusters=max_number_of_services)
             verbose_print("Services compressed. Proceeding with clustering...", self.verbose)
 
         # cluster services, create convex hulls from cluster points and assign clusters to blocks
