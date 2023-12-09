@@ -45,18 +45,18 @@ def get_cluster_hulls(services, distance_limit=1000, link="average"):
     distance_matrix = get_distance_matrix(services)
     
     services = services.to_crs(4326)
-    services["cluster"] = AgglomerativeClustering(
+    services['cluster_id'] = AgglomerativeClustering(
         n_clusters=None,metric="precomputed",distance_threshold=distance_limit,linkage=link).fit_predict(distance_matrix)
 
-    services_per_cluster = services.groupby(["cluster"])["geometry"].count()
+    services_per_cluster = services.groupby(['cluster_id'])["geometry"].count()
     
     hulls = []
     for cluster in services_per_cluster[services_per_cluster > 4].index:
-        hulls.append([cluster,services[services["cluster"] == cluster]["geometry"].unary_union.convex_hull])
+        hulls.append([cluster,services[services['cluster_id'] == cluster]["geometry"].unary_union.convex_hull])
 
     cluster_polygons = gpd.GeoDataFrame(hulls)
-    cluster_polygons.columns = ["cluster", "geometry"]
-    cluster_polygons = cluster_polygons.set_geometry("geometry").set_crs(4326)
+    cluster_polygons.columns = ['cluster_id', 'geometry']
+    cluster_polygons = cluster_polygons.set_geometry('geometry').set_crs(4326)
     cluster_polygons = cluster_polygons[cluster_polygons.type == "Polygon"]
 
     return cluster_polygons
