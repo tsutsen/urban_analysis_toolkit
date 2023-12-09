@@ -21,21 +21,21 @@ def evaluate_centrality(blocks,services):
     blocks = blocks.drop(['diversity','centrality','centrality_bin','services_total'],axis=1,errors='ignore')
     
     # collect all service tags per cluster
-    services_groupped = services.groupby("cluster").agg({"tags": "sum"})["tags"].apply(list)
+    services_groupped = services.groupby('cluster_id').agg({"tags": "sum"})["tags"].apply(list)
     
     # calculate diversity per cluster
-    diversity = pd.DataFrame(columns=["cluster", "diversity"])
+    diversity = pd.DataFrame(columns=['cluster_id', "diversity"])
     for i, x in services_groupped.items():
         diversity.loc[len(diversity)] = [i,1 - mm.simpson_diversity(pd.Series(x), categorical=True)]
 
     # count services per cluster
-    services_total = services.groupby("cluster")["geometry"].count().rename("services_total").reset_index()
+    services_total = services.groupby('cluster_id')["geometry"].count().rename("services_total").reset_index()
     
     # merge diversity info and cluster count with blocks dataframe
-    blocks = blocks.merge(diversity, how="left",on='cluster')
-    blocks = blocks.merge(services_total, how="left",on='cluster')
+    blocks = blocks.merge(diversity, how="left",on='cluster_id')
+    blocks = blocks.merge(services_total, how="left",on='cluster_id')
 
-    #self.blocks = self.blocks.merge(self.blocks.groupby("cluster")["area"].sum().rename("cluster_area").reset_index(),how="left")
+    #self.blocks = self.blocks.merge(self.blocks.groupby('cluster_id')["area"].sum().rename("cluster_area").reset_index(),how="left")
     
     # max-normalize diversity and service count 
     diversity_normalized = blocks["diversity"] / blocks["diversity"].max()
