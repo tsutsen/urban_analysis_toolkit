@@ -38,7 +38,7 @@ class CityModel:
     def generate_blocks(self, min_block_width=None):
         """
         # TODO
-        
+        k
         Attributes
         ----------
         # TODO
@@ -122,12 +122,12 @@ class CityModel:
         
         self.blocks = get_attribute_from_largest_intersection(
             self.blocks, self.cluster_polygons, 
-            attribute_column="cluster",
+            attribute_column='cluster_id',
             df_id_column="block_id",
             projected_crs=self.local_crs)
         
         # if cluster polygon occupies less than X% of block's area, unassign cluster from this block
-        self.blocks.loc[self.blocks["intersection_area"] < 0.4, "cluster"] = np.nan
+        self.blocks.loc[self.blocks["intersection_area"] < 0.4, 'cluster_id'] = np.nan
         self.blocks = self.blocks.drop('intersection_area',axis=1)
         
         self._link_services_to_blocks()
@@ -188,7 +188,7 @@ class CityModel:
         self.blocks['area'] = self.blocks.to_crs(self.local_crs).area
         
         cluster_info = (
-            self.blocks.groupby("cluster").agg(
+            self.blocks.groupby('cluster_id').agg(
                 {
                     "centrality_bin": "first",
                     "centrality": "first",
@@ -204,16 +204,16 @@ class CityModel:
             lambda x: gpd.GeoDataFrame(geometry=x).unary_union)
         cluster_info = gpd.GeoDataFrame(cluster_info,crs=4326)
         
-        service_stats_tags = self.services.groupby("cluster")["tags"].apply("sum")
+        service_stats_tags = self.services.groupby('cluster_id')["tags"].apply("sum")
         service_stats_tags = service_stats_tags.map(
             lambda x: [*pd.Series(x).value_counts().nlargest(3).keys()]).reset_index()
         
-        service_stats_categories = self.services.groupby("cluster")["category"].apply(list)
+        service_stats_categories = self.services.groupby('cluster_id')["category"].apply(list)
         service_stats_categories = service_stats_categories.map(
             lambda x: [*pd.Series(x).value_counts().nlargest(3).keys()]).reset_index()
 
         service_category_counts = self.services.groupby(
-            ["cluster", "category"])["geometry"].count().unstack().reset_index()
+            ['cluster_id', "category"])["geometry"].count().unstack().reset_index()
         
         cluster_info = cluster_info.merge(service_category_counts, how="left")
         
@@ -241,11 +241,11 @@ class CityModel:
         """
            
         blocks_columns = ["block_id", "geometry"]
-        if "cluster" in self.blocks.columns:
-            blocks_columns.append("cluster")
+        if 'cluster_id' in self.blocks.columns:
+            blocks_columns.append('cluster_id')
 
         # drop block_id and cluster columns in services
-        self.services = self.services.drop(['block_id','cluster'], axis=1, errors='ignore')
+        self.services = self.services.drop(['block_id','cluster_id'], axis=1, errors='ignore')
 
         # add block_id and cluster from the nearest block to the services
         self.services = self.services.to_crs(self.local_crs)
