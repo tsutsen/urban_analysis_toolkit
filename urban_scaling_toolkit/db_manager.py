@@ -161,3 +161,13 @@ def create_cluster_view():
         JOIN
         GROUP BY
     """)
+    
+    
+def get_city_id(city_name):
+    try:
+        query = f"SELECT city_id FROM city WHERE name='{city_name}' LIMIT 1"
+        city_id = execute_query(query,return_rows=1)[0]
+        return city_id
+    except TypeError:
+        print(f'City {city_name} not found')
+        return
