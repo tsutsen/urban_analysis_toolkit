@@ -1,6 +1,8 @@
 import psycopg2
 from dotenv import load_dotenv
 import os 
+from geopandas import read_postgis
+from pandas import read_sql
 
 load_dotenv()
 
@@ -20,14 +22,13 @@ def init_db():
     create_servicetag_table()
     
 
-def execute_query(
+def post_query(
     query,
     host=HOST,
     port=PORT,
     user=USER,
     dbname=DBNAME,
-    password=PASSWORD,
-    return_rows=None):
+    password=PASSWORD):
     
     connection = psycopg2.connect(
         host=host,
@@ -45,27 +46,48 @@ def execute_query(
                 cursor.execute(q)
         else:
             cursor.execute(query)
-        
-        if return_rows is not None:
-            if return_rows == 'all':
-                return cursor.fetchall()
-            elif return_rows == 1:
-                return cursor.fetchone()
-            elif return_rows > 1:
-                return cursor.fetchmany(return_rows)
-        
+            
     finally:
         cursor.close()
         connection.close()
+        
+
+def get_query(
+    query,
+    host=HOST,
+    port=PORT,
+    user=USER,
+    dbname=DBNAME,
+    password=PASSWORD,
+    geom=None):
+    
+    connection = psycopg2.connect(
+        host=host,
+        port=port,
+        user=user,
+        dbname=dbname,
+        password=password)
+    
+    cursor = connection.cursor()
+    
+    if geom is None and 'geom' in query:
+        geom=True
+    
+    if geom:
+        res = read_postgis(query,con=connection,geom_col='geometry',crs=4326)
+        return res
+    
+    res = read_sql(query,con=connection)
+    return res
 
 
 def create_urban_scaling_db():
-    execute_query(f"CREATE DATABASE {DBNAME};",dbname=None)
-    execute_query('CREATE EXTENSION postgis')
+    post_query(f"CREATE DATABASE {DBNAME};",dbname=None)
+    post_query('CREATE EXTENSION postgis')
     
 
 def create_city_table():
-    execute_query("""
+    post_query("""
         CREATE TABLE IF NOT EXISTS city (
             city_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             name VARCHAR(255),
@@ -78,7 +100,7 @@ def create_city_table():
     
     
 def create_road_table():
-    execute_query("""
+    post_query("""
         CREATE TABLE IF NOT EXISTS road (
             road_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             city_id INT,
@@ -91,7 +113,7 @@ def create_road_table():
     
     
 def create_block_table():
-    execute_query("""
+    post_query("""
         CREATE TABLE IF NOT EXISTS block (
             block_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             city_id INT,
@@ -107,7 +129,7 @@ def create_block_table():
     
 
 def create_service_table():
-    execute_query("""
+    post_query("""
         CREATE TABLE IF NOT EXISTS service (
             service_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             city_id INT,
@@ -121,7 +143,7 @@ def create_service_table():
    
 
 def create_tag_table():
-    execute_query("""
+    post_query("""
         CREATE TABLE IF NOT EXISTS tag (
             tag_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             servicetag_id INT,
@@ -132,7 +154,7 @@ def create_tag_table():
     
     
 def create_servicetag_table():
-    execute_query([
+    post_query([
         """
         CREATE TABLE IF NOT EXISTS servicetag (
             servicetag_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -154,20 +176,10 @@ def create_servicetag_table():
     
     
 def create_cluster_view():
-    execute_query("""
+    post_query("""
         CREATE VIEW cluster AS
         SELECT 
         FROM
         JOIN
         GROUP BY
     """)
-    
-    
-def get_city_id(city_name):
-    try:
-        query = f"SELECT city_id FROM city WHERE name='{city_name}' LIMIT 1"
-        city_id = execute_query(query,return_rows=1)[0]
-        return city_id
-    except TypeError:
-        print(f'City {city_name} not found')
-        return
