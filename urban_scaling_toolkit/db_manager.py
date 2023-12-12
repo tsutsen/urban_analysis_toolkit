@@ -77,6 +77,19 @@ def create_city_table():
         """)
     
     
+def create_road_table():
+    execute_query("""
+        CREATE TABLE IF NOT EXISTS road (
+            road_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+            city_id INT,
+            geometry geometry(LineString, 4326),
+            
+            CONSTRAINT fk_city FOREIGN KEY(city_id) REFERENCES city(city_id)
+            ON DELETE CASCADE
+        );
+        """)
+    
+    
 def create_block_table():
     execute_query("""
         CREATE TABLE IF NOT EXISTS block (
