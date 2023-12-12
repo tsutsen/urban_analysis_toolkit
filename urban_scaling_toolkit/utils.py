@@ -8,6 +8,8 @@ from pyproj.aoi import AreaOfInterest
 from pyproj.database import query_crs_info
 from pyproj import CRS
 
+import momepy as mm
+
 
 def verbose_print(text, verbose=True):
     if verbose: print(text)
@@ -191,3 +193,7 @@ def load_pkl(filename):
     with open(filename, 'rb') as pickle_file:
         file = dill.load(pickle_file)
     return file
+
+def gdf_to_graph(gdf,projected_crs):
+    graph = mm.gdf_to_nx(gdf.to_crs(projected_crs),length='length')
+    return graph
