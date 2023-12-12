@@ -258,7 +258,9 @@ class CityModel:
         # clean up indices in services GeoDataFrame
         self.services = self.services.drop("index_right", axis=1)
         self.services["block_id"] = self.services["block_id"].astype(int)
-        self.services = self.services.reset_index(drop=True)
+        
+        self.services = self.services.drop('service_id',axis=1, errors='ignore')
+        self.services = self.services.reset_index().rename(columns={'index':'service_id'})
         
         
     @staticmethod
