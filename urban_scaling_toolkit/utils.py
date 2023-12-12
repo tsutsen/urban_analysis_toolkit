@@ -197,3 +197,7 @@ def load_pkl(filename):
 def gdf_to_graph(gdf,projected_crs):
     graph = mm.gdf_to_nx(gdf.to_crs(projected_crs),length='length')
     return graph
+
+
+def hash_rows(df):
+    return df.apply(lambda x: hash(tuple(x)), axis = 1)
