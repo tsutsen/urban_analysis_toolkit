@@ -137,7 +137,7 @@ def create_block_table():
             cluster_id INT,
             population INT,
             area FLOAT,
-            geometry geometry(Polygon, 4326) UNIQUE,
+            geometry geometry(Polygon, 4326),
             
             CONSTRAINT fk_city FOREIGN KEY(city_id) REFERENCES city(city_id)
             ON DELETE CASCADE
