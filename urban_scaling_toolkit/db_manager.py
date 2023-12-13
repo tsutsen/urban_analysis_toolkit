@@ -137,7 +137,7 @@ def create_block_table():
             cluster_id INT,
             population INT,
             area FLOAT,
-            geometry geometry(Polygon, 4326),
+            geometry geometry(Polygon, 4326) UNIQUE,
             
             CONSTRAINT fk_city FOREIGN KEY(city_id) REFERENCES city(city_id)
             ON DELETE CASCADE
@@ -168,7 +168,7 @@ def create_tag_table():
         CREATE TABLE IF NOT EXISTS tag (
             tag_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             name VARCHAR(255),
-            category VARCHAR(255)               
+            category VARCHAR(255)              
         );
         """)
     
