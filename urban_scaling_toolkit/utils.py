@@ -2,6 +2,7 @@ import geopandas as gpd
 from shapely.geometry import MultiPolygon, Polygon
 import numpy as np
 import dill
+import json
 
 import pyproj
 from pyproj.aoi import AreaOfInterest
@@ -9,7 +10,6 @@ from pyproj.database import query_crs_info
 from pyproj import CRS
 
 import momepy as mm
-
 
 def verbose_print(text, verbose=True):
     if verbose: print(text)
@@ -197,3 +197,12 @@ def load_pkl(filename):
 def gdf_to_graph(gdf,projected_crs):
     graph = mm.gdf_to_nx(gdf.to_crs(projected_crs),length='length')
     return graph
+
+def save_json(data_dict,filename):
+    with open(filename, 'w') as fp:
+        json.dump(data_dict, fp)
+        
+def load_json(filename):
+    with open(filename, 'r') as fp:
+        data = json.load(fp)
+    return data
