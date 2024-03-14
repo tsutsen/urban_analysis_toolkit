@@ -27,7 +27,7 @@ def fetch_territory(territory_name):
     territory = ox.geocode_to_gdf(territory_name)
     territory = territory.set_crs(4326)
     territory = territory["geometry"].reset_index(drop=True)
-    territory = gpd.GeoDataFrame(territory)
+    territory = gpd.GeoDataFrame(territory.make_valid(),columns=['geometry'])
     
     return territory
 
