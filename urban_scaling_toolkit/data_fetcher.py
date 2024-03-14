@@ -108,7 +108,16 @@ def fetch_water(territory):
         
     try:
         water = ox.features_from_polygon(
-            territory, {"natural": ["water","bay"],"waterway":"river"})
+            territory, {'water':True,  
+                        'riverbank':True,  
+                        'reservoir':True,  
+                        'basin':True,  
+                        'dock':True,  
+                        'canal':True, 
+                        'pond':True,
+                        'natural':'bay',
+                        'waterway':['river','canal','ditch'],
+                        'landuse':'basin'})
         water = water.loc[water.geom_type.isin(
             ['Polygon','MultiPolygon','LineString','MultiLineString'])]
         
