@@ -3,6 +3,8 @@ import pandas as pd
 import momepy as mm
 import numpy as np
 import requests
+import shapely
+import json
     
 def evaluate_centrality(blocks,services):
     """
@@ -61,7 +63,10 @@ def evaluate_centrality(blocks,services):
 # indicators = ['mapping-saturation','currentness']
 # topics = ['building-count','amenities','poi']
 def assess_osm_data_quality(geom, indicator='mapping-saturation',topic='poi'):
-
+    
+    geom = shapely.to_geojson(geom)
+    geom = {'type':'FeatureCollection','features':[{'type':'Feature','geometry':json.loads(geom)}]}
+    
     base_url = "https://oqt.ohsome.org/api/indicators/"
     url = base_url + indicator
 
