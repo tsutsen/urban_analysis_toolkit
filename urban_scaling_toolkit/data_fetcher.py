@@ -108,20 +108,19 @@ def fetch_water(territory):
         
     try:
         water = ox.features_from_polygon(
-            territory, {'water':True,  
-                        'riverbank':True,  
+            territory, {'riverbank':True,  
                         'reservoir':True,  
                         'basin':True,  
                         'dock':True,  
                         'canal':True, 
                         'pond':True,
-                        'natural':'bay',
+                        'natural':['water','bay'],
                         'waterway':['river','canal','ditch'],
                         'landuse':'basin'})
         water = water.loc[water.geom_type.isin(
             ['Polygon','MultiPolygon','LineString','MultiLineString'])]
         
-        water = water.reset_index(drop=True)["geometry"]
+        water = water.reset_index(drop=True)["geometry"].drop_duplicates()
         water = gpd.GeoDataFrame(water)
         
         return water
