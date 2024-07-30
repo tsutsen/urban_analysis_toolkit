@@ -5,6 +5,8 @@ import numpy as np
 import requests
 import shapely
 import json
+from scipy.optimize import curve_fit
+
     
 def evaluate_centrality(blocks,services):
     """
@@ -82,3 +84,17 @@ def assess_osm_data_quality(geom, indicator='mapping-saturation',topic='poi'):
     results = response.json()["result"]
 
     return results[0]['result']['value']
+
+
+def power_law(x, a, b):
+    return a * np.power(x, b)
+
+
+def get_scaling_factor(x,y):
+    popt, pcov = curve_fit(power_law, y, x, p0=[1, 1]) # bounds=[[1e-3, 1e-3], [1e20, 50]]
+    scaling_factor = popt[1]
+    return scaling_factor
+
+
+def predict_power_law(y,popt):
+    return power_law(y, *[popt[0],popt[1]])
