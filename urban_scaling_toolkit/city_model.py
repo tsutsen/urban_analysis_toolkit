@@ -18,13 +18,14 @@ class CityModel:
         
         self.water = None
         if water is not None:
-            territory = territory.reset_index().overlay(water[water.geom_type != 'LineString'].reset_index(),how='difference') # cut water polygons from territory
+            territory = territory.reset_index().overlay(
+                gpd.GeoDataFrame(geometry=[water[water.geom_type != 'LineString'].unary_union],crs=4326),how='difference')[['geometry']] # cut water polygons from territory
             self.water = water.geometry if type(water) == gpd.GeoDataFrame else water
             self.water = self.water.map(lambda x: x.boundary if x.geom_type in ['Polygon','MultiPolygon'] else x).set_crs(4326)
         
         self.territory = territory.unary_union
         
-        self.local_crs = utils.get_projected_crs(self.territory)
+        self.local_crs = territory.estimate_utm_crs()
 
         self.roads = roads.geometry if type(roads) == gpd.GeoDataFrame else roads
         self.railways = railways.geometry if type(railways) == gpd.GeoDataFrame else railways
@@ -38,7 +39,7 @@ class CityModel:
     def generate_blocks(self, min_block_width=None):
         """
         # TODO
-        k
+
         Attributes
         ----------
         # TODO
@@ -120,6 +121,7 @@ class CityModel:
             distance_limit=clustering_distance,
             link=method)
         
+        self.blocks = self.blocks.drop('cluster_id',axis=1,errors='ignore')
         self.blocks = get_attribute_from_largest_intersection(
             self.blocks, self.cluster_polygons, 
             attribute_column='cluster_id',
